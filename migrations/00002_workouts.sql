@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE IF NOT EXIST workouts (
+CREATE TABLE IF NOT EXISTS workouts (
     id BIGSERIAL PRIMARY KEY,
     -- user_id ref
     title VARCHAR(255) NOT NULL,
