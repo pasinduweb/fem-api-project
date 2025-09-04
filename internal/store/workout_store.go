@@ -33,5 +33,52 @@ func NewPostgresWorkoutStore(db *sql.DB) *PostgresWorkoutStore {
 
 type WorkoutStore interface {
 	CreateWorkout(*Workout) (*Workout, error)
-	GetWorkoutByID(id int64) (*Workout, error)
+	GetWorkoutById(id int64) (*Workout, error)
+}
+
+func (pg *PostgresWorkoutStore) CreateWorkout(workout *Workout) (*Workout, error) {
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	query := `
+		INSERT INTO workouts (user_id, title, description, duration_minutes, calories_burned)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id 
+  	`
+
+	err = tx.QueryRow(query, workout.UserId, workout.Title, workout.Description, workout.DurationMinutes, workout.CaloriesBurned).Scan(&workout.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range workout.Entries {
+		query := `
+			INSERT INTO workout_entries (workout_id, exercise_name, sets, reps, duration_seconds, weight, notes, order_index)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			RETURNING id
+    	`
+
+		err = tx.QueryRow(query, workout.Id, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationSeconds, entry.Weight, entry.Notes, entry.OrderIndex).Scan(&entry.Id)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = tx.Commit()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return workout, nil
+}
+
+func (pg *PostgresWorkoutStore) GetWorkoutById(id int64) (*Workout, error) {
+	workout := &Workout{}
+	return workout, nil
 }
