@@ -29,3 +29,46 @@ func setupTestDb(t *testing.T) *sql.DB {
 
 	return db
 }
+
+func TestCreateWorkout(t *testing.T) {
+	db := setupTestDb(t)
+
+	defer db.Close()
+
+	store := NewPostgresWorkoutStore(db)
+
+	tests := []struct {
+		name    string
+		workout *Workout
+		wantErr bool
+	}{
+		{
+			name: "valid workout",
+			workout: &Workout{
+				Title:           "push day",
+				Description:     "upper body day",
+				DurationMinutes: 60,
+				CaloriesBurned:  200,
+				Entries: []WorkoutEntry{
+					{
+						ExerciseName: "Bench press",
+						Sets:         3,
+						Reps:         IntPtr(10),
+						Weight:       FloatPtr(135.5),
+						Notes:        "warm up properly",
+						OrderIndex:   1,
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+}
+
+func IntPtr(i int) *int {
+	return &i
+}
+
+func FloatPtr(i float64) *float64 {
+	return &i
+}
